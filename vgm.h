@@ -30,51 +30,64 @@
  *         and sends commands to YM2612 and SN76489 chips.
  *  \{ */
 
-/// Dirty trick to check things at compile time and error if check fails
+/* Dirty trick to check things at compile time and error if check fails */
 #define COMPILE_TIME_ASSERT(expr) typedef uint8_t COMP_TIME_ASSERT[((!!(expr))*2-1)]
 
 #define VGM_MAX_HEADLEN     192
 
 #define VGM_MIN_HEADLEN     64
 
-/// Function completed without error
-enum VGMErrorCode{
+/* Function completed without error */
+enum VGMErrorCode {
 	VGM_OK=0,
-	/// Function failed
-	VGM_ERROR = -1,
-	/// An error opening/reading a file occurred
-	VGM_FILE_ERR = -2,
-	/// The VGM header was not correct
-	VGM_HEAD_ERR = -3,
-	/// The VGM stream was not correct
-	VGM_STREAM_ERR = -4,
-	/// Unsupported VGM file
-	VGM_NOT_SUPPORTED = -5,
-	/// Reached end of VGM stream
-	VGM_EOF = -6,
-	/// Reached start of VGM stream
-	VGM_SOF = -7,
-	/// Cannot complete request because module is busy
-	VGM_BUSY = -8
+	/* Function failed */
+	VGM_ERROR=-1,
+	/* An error opening/reading a file occurred */
+	VGM_FILE_ERR=-2,
+	/* The VGM header was not correct */
+	VGM_HEAD_ERR=-3,
+	/* The VGM stream was not correct */
+	VGM_STREAM_ERR=-4,
+	/* Unsupported VGM file */
+	VGM_NOT_SUPPORTED=-5,
+	/* Reached end of VGM stream */
+	VGM_EOF=-6,
+	/* Reached start of VGM stream */
+	VGM_SOF=-7,
+	/* Cannot complete request because module is busy */
+	VGM_BUSY=-8
 };
+/*
+#define VGM_OK 0
+#define VGM_ERROR -1
+#define VGM_FILE_ERR -2
+#define VGM_HEAD_ERR -3
+#define VGM_STREAM_ERR -4
+#define VGM_NOT_SUPPORTED -5
+#define VGM_EOF -6
+#define VGM_SOF -7
+#define VGM_BUSY -8
+*/
+
+typedef enum VGMErrorCode VGMErrorCode;
 
 typedef struct
 {
 	uint8_t reg;
 	uint8_t value;
-} __attribute__((packed)) YM2612Data;
+} /*__attribute__((packed))*/ YM2612Data;
 
 typedef struct
 {
-	uint8_t fix; // 0x66 compatibility command to make older players stop parsing the stream
-	uint8_t type; // Data type
-	uint32_t size; // Data size
-	uint8_t *data; // Data
+	uint8_t fix; /* 0x66 compatibility command to make older players stop parsing the stream */
+	uint8_t type; /* Data type */
+	uint32_t size; /* Data size */
+	uint8_t *data; /* Data */
 	uint8_t *current;
-} __attribute__((packed)) VgmDataBlock;
+} /*__attribute__((packed))*/ VgmDataBlock;
 
 
-/// VGM header version 1.61
+/* VGM header version 1.61 */
 typedef struct
 {
     uint32_t ident;
@@ -86,28 +99,18 @@ typedef struct
     uint32_t totalSamples;
     uint32_t loopOffset;
     uint32_t loopNSamples;
-    // VGM 1.01 additions
+    /* VGM 1.01 additions */
     uint32_t rate;
-    uint16_t snFeedback; // 0x0009 for versions prior to 1.01
-    uint8_t snNfsrLen;   // 16 for versions prior to 1.01
-    // VGM 1.51 additions
-    union
-    {
-        uint8_t snFlags;
-        struct
-        {
-            uint8_t freq400:1;
-            uint8_t outNeg:1;
-            uint8_t stereo:1;
-            uint8_t div8:1;
-        } sn;
-    };
-    // VGM 1.10 additions
+    uint16_t snFeedback; /* 0x0009 for versions prior to 1.01 */
+    uint8_t snNfsrLen;   /* 16 for versions prior to 1.01 */
+    /* VGM 1.51 additions */
+    uint8_t snFlags;
+    /* VGM 1.10 additions */
     uint32_t ym2612Clk;
     uint32_t ym2151Clk;
-    // VGM 1.50 additions
-    uint32_t VgmStreamOff;   // 0x40 for versions prior to 1.50
-    // VGM 1.51 additions
+    /* VGM 1.50 additions */
+    uint32_t VgmStreamOff;   /* 0x40 for versions prior to 1.50 */
+    /* VGM 1.51 additions */
     uint32_t SegaPcmClk;
     uint32_t SegaPcmIfReg;
     uint32_t rf5c68Clk;
@@ -128,37 +131,19 @@ typedef struct
     uint8_t ay8910Flags;
     uint8_t ym2203Flags;
     uint8_t ym2608Flags;
-    // VGM 1.60 additions
+    /* VGM 1.60 additions */
     uint8_t volModifier;
     uint8_t reserved1;
     uint8_t loopBase;
-    // VGM 1.51 additions
+    /* VGM 1.51 additions */
     uint8_t loopModif;
     uint32_t GmbDmgClk;
     uint32_t NesApuClk;
     uint32_t MultiPcmClk;
     uint32_t upd7759Clk;
     uint32_t okim6258Clk;
-    union
-    {
-        uint8_t okim6258Flags;
-        struct
-        {
-            uint8_t clkDiv:2;
-            uint8_t adpcm34bit:1;
-            uint8_t out1012bit:1;
-        } okim6258;
-    };
-    union
-    {
-        uint8_t k054539Flags;
-        struct
-        {
-            uint8_t revStereo:1;
-            uint8_t disReverb:1;
-            uint8_t keyOnUpdate:1;
-        } k054539;
-    };
+    uint8_t okim6258Flags;
+    uint8_t k054539Flags;
     uint8_t c140Type;
     uint8_t reserved2;
     uint32_t okim6295Clk;
@@ -171,19 +156,19 @@ typedef struct
     uint32_t qSoundClk;
     uint32_t reserved3;
     uint32_t reserved4;
-} __attribute__((packed)) VgmHead;
+} /*__attribute__((packed))*/ VgmHead;
 
 typedef enum
 {
-    VGM_CLOSE,      ///< No VGM file is opened
-    VGM_STOP,       ///< VGM file is opened, playback is stopped
-    VGM_PLAY,       ///< VGM file is being played
-    VGM_PAUSE,      ///< VGM playback is paused
-    VGM_ERROR_STOP  ///< An error occurred while playing the file
+    VGM_CLOSE,      /* < No VGM file is opened */
+    VGM_STOP,       /* < VGM file is opened, playback is stopped */
+    VGM_PLAY,       /* < VGM file is being played */
+    VGM_PAUSE,      /* < VGM playback is paused */
+    VGM_ERROR_STOP  /* < An error occurred while playing the file */
 } VgmStat;
 
-/// Check header length is correct
-COMPILE_TIME_ASSERT(sizeof(VgmHead) == VGM_MAX_HEADLEN);
+/* Check header length is correct */
+/*COMPILE_TIME_ASSERT(sizeof(VgmHead) == VGM_MAX_HEADLEN);*/
 
 #ifdef __cplusplus
 extern "C"
@@ -207,7 +192,7 @@ void VgmInit(void);
  * - VGM_STREAM_ERR Stream format is not correct.
  * - VGM_NOT_SUPPORTED VGM header looks correct but file is not supported.
  ****************************************************************************/
-enum VGMErrorCode VgmOpen(char *fileName);
+VGMErrorCode VgmOpen(char *fileName);
 
 /************************************************************************//**
  * \brief Stars playing a previously opened VGM file.

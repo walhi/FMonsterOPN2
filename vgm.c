@@ -1,3 +1,8 @@
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /************************************************************************//**
  * \file   vgm.c
  * \brief  Parses VGM files (only Genesis/Megadrive and Master System ones)
@@ -37,12 +42,12 @@ typedef struct
     VgmStat s;
 } VgmData;
 
-/// VGM module datam
+/* VGM module datam */
 static VgmData vd;
 
 void VgmTimerHandler(void)
 {
-    /// Clear interrupt flag
+    /* Clear interrupt flag */
 }
 
 /************************************************************************//**
@@ -51,10 +56,8 @@ void VgmTimerHandler(void)
  ****************************************************************************/
 void VgmInit(void)
 {
-    /// Initialize submodules
+    /* Initialize submodules */
     Ym2612Init();
-
-    /// Configure 48 kHz timer
 }
 
 /************************************************************************//**
@@ -68,80 +71,89 @@ void VgmInit(void)
  * - VGM_STREAM_ERR Stream format is not correct.
  * - VGM_NOT_SUPPORTED VGM header looks correct but file is not supported.
  ****************************************************************************/
-enum VGMErrorCode VgmOpen(char *fileName)
+VGMErrorCode VgmOpen(char *fileName)
 {
     uint8_t readed;
-    /// Set some default values
+    VgmDataBlock block;
+    YM2612Data data;
+    uint32_t pointer;
+    uint16_t wait;
+    uint8_t command;
+    uint8_t i;
+
+    block.data = NULL;
+
+    /* Set some default values */
     memset(&vd.h, 0, VGM_MAX_HEADLEN);
     vd.h.snFeedback = 0x0009;
     vd.h.snNfsrLen = 16;
-    /// Open the file
+    /* Open the file */
     vd.s = VGM_CLOSE;
     if ((vd.f = fopen(fileName, "rb")) == NULL){
         return VGM_FILE_ERR;
 		}
 
-    /// Read fields of 1.00 VGM header, checking for errors
-		readed = fread(&vd.h, 1, VGM_MIN_HEADLEN, vd.f);
+    /* Read fields of 1.00 VGM header, checking for errors */
+    readed = fread(&vd.h, 1, VGM_MIN_HEADLEN, vd.f);
     if (!readed)
     {
         fclose(vd.f);
+	fprintf(stderr, "VGM_FILE_ERR 1\r\n");
         return VGM_FILE_ERR;
     }
     if (readed < VGM_MIN_HEADLEN)
     {
         fclose(vd.f);
+	fprintf(stderr, "VGM_HEAD_ERR 1\r\n");
         return VGM_HEAD_ERR;
     }
 
-    /// Check for file identification "VGM " string
+    /* Check for file identification "VGM " string */
     if (0x206D6756 != vd.h.ident)
     {
         fclose(vd.f);
+	printf("VGM_HEAD_ERR 2 |0x%08x|\r\n", (long int)vd.h.ident);
+	printf("%c%c%c%c\r\n", ((char *)&vd.h.ident)[0], ((char *)&vd.h.ident)[1], ((char *)&vd.h.ident)[2], ((char *)&vd.h.ident)[3]);
         return VGM_HEAD_ERR;
     }
 
-    /// Read extra fields if header version is 1.51 or greater
+    /* Read extra fields if header version is 1.51 or greater */
     if (1.51 <= vd.h.version)
     {
 			readed = fread(&vd.h.rf5c68Clk, 1, VGM_MAX_HEADLEN - VGM_MIN_HEADLEN, vd.f);
 			if (!readed || ((VGM_MAX_HEADLEN - VGM_MIN_HEADLEN) != readed))
         {
 					fclose(vd.f);
+					fprintf(stderr, "VGM_HEAD_ERR 3\r\n");
 					return VGM_HEAD_ERR;
         }
     }
 
-    /// Check this is a Master System or Megadrive/Genesis VGM file
+    /* Check this is a Master System or Megadrive/Genesis VGM file */
     if (!vd.h.ym2612Clk && !vd.h.sn76489Clk)
     {
         fclose(vd.f);
+	fprintf(stderr, "VGM_HEAD_ERR 4\r\n");
         return VGM_HEAD_ERR;
     }
 
-    /// File OK, go to stop state
+    /* File OK, go to stop state */
     vd.s = VGM_STOP;
 
-		fprintf(stderr, "OPN2 clock: %d\n", vd.h.ym2612Clk);
-		fprintf(stderr, "VGM rate: %d\n", vd.h.rate);
-		fprintf(stderr, "VGM Data offset: 0x%08x\n", vd.h.VgmStreamOff);
+		fprintf(stderr, "OPN2 clock: %d\r\n", vd.h.ym2612Clk);
+		fprintf(stderr, "VGM rate: %d\r\n", vd.h.rate);
+		fprintf(stderr, "VGM Data offset: 0x%08x\r\n", vd.h.VgmStreamOff);
 
-		// go to data offset value
+		/* go to data offset value */
 		if (vd.h.VgmStreamOff == 0x0c){
-			fseek(vd.f, 0x40, SEEK_SET);
+			fseek(vd.f, (long int)0x40, SEEK_SET);
 		} else {
-			fseek(vd.f, 0x34, SEEK_SET);
-			fseek(vd.f, vd.h.VgmStreamOff, SEEK_CUR);
+			fseek(vd.f, (long int)0x34, SEEK_SET);
+			fseek(vd.f, (long int)vd.h.VgmStreamOff, SEEK_CUR);
 		}
 
-		uint8_t i;
-		VgmDataBlock block;
-		block.data = NULL;
-		YM2612Data data;
-		uint32_t pointer;
-		uint16_t wait;
+
 		for (i = 0; ; i++){
-			uint8_t command;
 			fread(&command, sizeof(uint8_t), 1, vd.f);
 			switch (command){
 			case 0x67:
@@ -149,7 +161,7 @@ enum VGMErrorCode VgmOpen(char *fileName)
 				if (block.data != NULL){
 					free(block.data);
 				}
-				block.data = malloc(block.size);
+				block.data = (uint8_t *)malloc(block.size);
 				block.current = block.data;
 				fread(block.data, 1, block.size, vd.f);
 				fprintf(stderr, "Data block (0x%d bytes)\n", block.size);
@@ -203,20 +215,21 @@ enum VGMErrorCode VgmOpen(char *fileName)
 			case 0x8E:
 			case 0x8F:
 				if ((block.data + block.size) > block.current){
-					Ym2612RegWrite(0, 0x2A, *block.current++);
+					Ym2612RegWrite((uint8_t)0, (uint8_t)0x2A, *block.current++);
 				}
-				// wait (command & 0x0f);
+				/* wait (command & 0x0f); */
 				fprintf(stderr, "Send PCM Data. Wait %d samples.\n", (command & 0x0f));
 				break;
 			case 0xE0:
 				fread(&pointer, 1, sizeof(uint32_t), vd.f);
 				if (pointer != 0)
-					fseek(vd.f, pointer, SEEK_CUR);
+					fseek(vd.f, (long int)pointer, SEEK_CUR);
 
 				fprintf(stderr, "Go to data block.\n", wait);
 				break;
 			default:
 				fprintf(stderr, "wtf? 0x%02x\n", command);
+				return VGM_OK;
 			}
 
 
@@ -241,11 +254,11 @@ int VgmPlay(void)
         case VGM_CLOSE: return VGM_ERROR;
         case VGM_PLAY: return VGM_BUSY;
         case VGM_STOP:
-            // Go to start of data, preload a data sector
-            // Load samples if any
+            /* Go to start of data, preload a data sector */
+            /* Load samples if any */
         case VGM_PAUSE:
             vd.s = VGM_PLAY;
-            // Enable timer. It will do all the work
+            /* Enable timer. It will do all the work */
             return VGM_OK;
     }
     return VGM_OK;
@@ -348,3 +361,8 @@ VgmStat VgmGetStat(void)
 }
 
 /** \} */
+
+
+#ifdef __cplusplus
+}
+#endif

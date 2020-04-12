@@ -58,7 +58,7 @@ void Ym2612Init(void);
  * \param[in] reg  YM2612 register to write to.
  * \param[in] val  Value to write to the YM2612.
  ****************************************************************************/
-void Ym2612RegWrite(u8 port, u8 reg, u8 val);
+void Ym2612RegWrite(uint8_t port, uint8_t reg, uint8_t val);
 
 #ifdef __cplusplus
 }

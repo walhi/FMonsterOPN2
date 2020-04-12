@@ -1,4 +1,5 @@
-/************************************************************************//**
+/************************************************************************/
+/**
  * \file	types.h
  * \brief	The usual datatype definitions, used for portability.
  * \author	Jesús Alonso (doragasu)
@@ -21,42 +22,28 @@
  */
 #ifndef _TYPES_H_
 #define _TYPES_H_
-
-#include <stdint.h>
-
-/// Unsigned 8-bit datatype
-typedef unsigned char u8;
-/// Signed 8-bit datatype
-typedef signed char i8;
-/// Unsigned 16-bit datatype
-typedef unsigned short u16;
-/// Signed 16-bit datatype
-typedef signed short i16;
-/// Unsigned 32-bit datatype
-typedef unsigned int u32;
-/// Signed 32-bit datatype
-typedef signed int i32;
-/// Unsigned 64-bit datatype
-typedef unsigned long long u64;
-/// Signed 64-bit datatype
-typedef long long i64;
-
+/*#include <stdint.h>*/
+typedef unsigned char uint8_t;
+typedef signed char int8_t;
+typedef unsigned short uint16_t;
+typedef signed short int16_t;
+typedef unsigned int uint32_t;
+typedef signed int int32_t;
+/*typedef unsigned long long u64;
+typedef long long i64;*/
 #ifndef TRUE
-/// Value for TRUE comparisons
 #define TRUE 1
 #endif
 #ifndef FALSE
-/// Value for FALSE comparisons
 #define FALSE 0
 #endif
 
 typedef union
 {
-	u32 dw;
-	u8 b[4];
+	uint32_t dw;
+	uint8_t b[4];
 } QBYTE;
 
-/// NULL definition. Should work for both C and C++
 #ifndef NULL
 #ifdef __cplusplus
 #define NULL 0
@@ -64,10 +51,9 @@ typedef union
 #define NULL ((void *)0)
 #endif
 #endif /*NULL*/
-
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
-#endif /*TRUE*/
 
+#endif /*TRUE*/
 #endif /*_TYPES_H_*/
