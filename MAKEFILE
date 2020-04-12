@@ -1,0 +1,16 @@
+# ---------------------------------------------------------------------
+# makefile by bill buckels 1997
+# ---------------------------------------------------------------------
+
+main.exe: main.o vgm.o ym2612.o
+            ln main.o vgm.o ym2612.o -lc -lm
+            @echo All Done!
+
+main.o: main.c
+           cc main.c
+
+vgm.o: vgm.c vgm.h
+           cc vgm.c
+
+ym2612.o: ym2612.c ym2612.h
+           cc ym2612.c

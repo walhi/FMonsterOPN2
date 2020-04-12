@@ -1,9 +1,6 @@
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #include "ym2612.h"
+
+#define OPN2 0x2b0
 
 /** \addtogroup ym2612_api
  *  \brief Module for controlling the YM2612 FM syntesizer. This module
@@ -24,11 +21,8 @@ void Ym2612Init(void)
  ****************************************************************************/
 void Ym2612RegWrite(uint8_t port, uint8_t reg, uint8_t val)
 {
+  unsigned char hwaddr = OPN2 + 2 * (port > 0);
+  do {} while(peekb(0, OPN2) & 0x80);
+  pokeb(0, reg, hwaddr);
+  pokeb(0, val, hwaddr + 1);
 }
-
-
-/** \} */
-
-#ifdef __cplusplus
-}
-#endif
